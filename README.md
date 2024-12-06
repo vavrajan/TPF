@@ -7,87 +7,73 @@ Source code for the paper:
 * [TPF](TPF) - Tensorflow implementation of Temporal Poisson Factorisation (TPF)
 * [DPF](DPF) - Tensorflow implementation of Dynamic Poisson Factorisation (DPF)
 *  both TPF and DPF have analogous directory structure and files
-* [analysis](analysis) - 
-contains the scripts for performing the estimation and post-processing
-  * [preprocess_speeches](analysis/preprocess_speeches.py) - 
-  load `hein-daily` original texts (possibly all sessions 97-114), 
-  process them with 
+* [analysis](TPF/analysis) - 
+contains the scripts for performing the pre-processing, estimation and post-processing TPF 
+([DPF](DPF/analysis))
+  * [hein_daily_preprocess_individual_vocabulary_combined](TPF/analysis/hein_daily_preprocess_individual_vocabulary_combined.py) - 
+  load `hein-daily` original texts from all sessions 97-114, 
+  process them separately with 
   [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
+  create a combined vocabulary for all sessions 
   and save into [data/hein-daily/clean](data/hein-daily/clean) 
-  * [author_info_congress_data_and_religion](analysis/author_info_congress_data_and_religion.py) - 
-  merge preprocessed [author_info](data/hein-daily/clean/author_info114.csv) 
-  with [data_aging_congress](data/hein-daily/orig/data_aging_congress.csv)
-  and for session 114 with [data_religion_114](data/hein-daily/orig/data_religion_114.csv)
-  * [estimate_STBS_cluster](analysis/estimate_STBS_cluster.py) - 
-  estimates STBS model on computational cluster 
-  * [compare_TBIP_with_STBS](analysis/compare_TBIP_with_STBS.py), 
-  [compare_variability_of_ideal_term.](analysis/compare_variability_of_ideal_term.py) 
-  compare two STBS outputs in terms of ideological positions and variability in ideological space
-  * [hein_daily_laptop](analysis/hein_daily_laptop.py) - 
-  an old py script that follows an estimation of STBS on `hein-daily` data
-* [code](code) - source code `.py` files for STBS estimation 
-  * [poisson_factorization](code/poisson_factorization.py) - run first for initialization
-  * [stbs](code/stbs.py) - the main file containing the definition of the STBS model
-  * [check_prior](code/check_prior.py), 
-  [input_pipeline](code/input_pipeline.py) and 
-  [create_X](code/create_X.py) prepare inputs for STBS model
-  * [train_step](code/train_step.py), 
-  [information_criteria](code/information_criteria.py), 
-  [utils](code/utils.py) and 
-  [var_and_prior_families](code/var_and_prior_family.py) used for estimation of STBS
-  * [plotting_functions](code/plotting_functions.py) contains functions to create descriptive plots using the latest STBS model parameter values 
+  * [define_time_periods_cluster](TPF/analysis/define_time_periods_cluster.py) - 
+  trigger [define_time_periods](TPF/code/define_time_periods.py) script on computational cluster
+  * [tpf_cluster](TPF/analysis/tpf_cluster.py), [dpf_cluster](DPF/analysis/dpf_cluster.py) - 
+  estimates TPF or DPF model on computational cluster 
+  * [table_ELBO](TPF/analysis/table_ELBO.py), 
+  [models_VIC](TPF/analysis/models_VIC.py) 
+  create tex tables for different settings of TPF containing ELBO, VIC and other characteristics
+* [code](TPF/code) - source code `.py` files defining TPF 
+([DPF](DPF/code))
+  * [define_time_periods](TPF/code/define_time_periods.py) - run first to define the division into time-periods
+  * [poisson_factorization](TPF/code/poisson_factorization.py) - run second for initialization
+  * [tpf_model](TPF/code/tpf_model.py), [dpf_model](DPF/code/dpf_model.py) - the main file containing the definition of the TPF and DPF model
+  * [check_prior](TPF/code/check_prior.py), 
+  [input_pipeline](TPF/code/input_pipeline.py) - prepare inputs for TPF (DPF)
+  * [train_step](TPF/code/train_step.py), 
+  [information_criteria](TPF/code/information_criteria.py), 
+  [var_and_prior_families](TPF/code/var_and_prior_family.py) - used for estimation of TPF (DPF)
+  * [plotting_functions](TPF/code/plotting_functions.py) - contains functions to create descriptive plots using the latest TPF (DPF) model parameter values 
     * `create_all_general_descriptive_figures` - for any dataset (histograms, barplots, wordclouds, ...)
-    * `create_all_figures_specific_to_data` - specific to each dataset (Republicans vs Democrats, ...)
-* [create_slurms](create_slurms) - `.py` files to create `.slurm` files for submitting jobs on computational cluster,
+    * `create_all_figures_specific_to_data` - specific to each dataset (similarities, evolutions, ...)
+  * [plotting_functions](TPF/code/create_latex_tables.py) - contains functions to create basic tex tables: vocabulary and content evolution in time
+* [create_slurm_files](TPF/create_slurm_files) - `.py` files to create `.slurm` files for submitting jobs on computational cluster,
 these files are specific to the computing environment used and are included for documentation (and inspiration) purposes 
 * [data](data) - contains data in separate folders
   * [hein-daily](data/hein-daily) - contains data from [Hein-Daily](https://data.stanford.edu/congress_text) (here only session 114)
     * [orig](data/hein-daily/orig) - original `hein-daily` data for session 114
       * [stopwords](data/hein-daily/orig/stopwords.txt) - 
       list of stopwords used to process the speeches
-      * `114_SpeakerMap.txt`, `byparty_2gram_114.txt`, `byspeaker_2gram_114.txt`, `descr_114.txt`, `speeches_114.txt` - 
+      * `sss_SpeakerMap.txt`, `byparty_2gram_sss.txt`, `byspeaker_2gram_sss.txt`, `descr_sss.txt`, `speeches_sss.txt` - 
       data from [Hein-Daily](https://data.stanford.edu/congress_text) (not here on GitHub)
+      where `sss` stands for the session number 
       * [data_aging_congress.csv](data/hein-daily/orig/data_aging_congress.csv) - 
       congress demographics data 
       [Congress today is older than it’s ever been by Skelley G. (2023)](https://fivethirtyeight.com/features/aging-congress-boomers/)
-      * [data_religion_114.csv](data/hein-daily/orig/data_religion_114.csv) - 
-      religion data for session 114 only 
-      [from Pew Research Center](https://www.pewresearch.org/religion/2015/01/05/members-of-congress-religious-affiliations/)
-    * [clean](data/hein-daily/clean) - string '114' is an *addendum* that is added to the end of the file name 
-    to specify a different version of your dataset such as different session or differently pre-processed data
-      * `author_(detailed_)info_...114.csv` - author-specific covariates
-      * [author_indices114](data/hein-daily/clean/author_indices114.npy) - 
-      a vector of the same length as the number of documents, contains indices of authors of documents
-      * [author_map114](data/hein-daily/clean/author_map114.txt) - 
-      vector of author names + parties "Jan Vávra (I)"
-      * [counts114](data/hein-daily/clean/counts114.npz) - 
-      document-term matrix in sparse format
-      * [vocabulary114](data/hein-daily/clean/vocabulary114.txt) - 
-      each row corresponds to one of the terms in vocabulary
+    * [clean](data/hein-daily/clean) - 
+      * string `addendum='_voc_combined'` is added to the end of the file name 
+      to specify a different version of pre-processing speeches such as definition of total vocabulary
+      * string `time_periods='sessions'` joins after `addendum + '_'` and declares the way how time-periods have been defined
+      by, in this case, time-period corresponds to session
+      * in the following `_-_-` stands for `addendum + '_' + time_periods`
+      * `author_time_info_-_-.csv` - information about the author in each time-period
+      * `breaks_-_-.npy` - the dividing points (dates) for the time-periods 
+      * `counts_-_-.npz` - 2D document-term matrix in sparse format
+      * `speech_info_-_-.csv` - information about each speech including the author and time indices
+      * `vocabulary_-.txt` - each row corresponds to one of the terms in the total vocabulary
     * [pf-fits](data/hein-daily/pf-fits) - initial values created by 
-    [poisson_factorization](code/poisson_factorization.py) initial values, `--` abbreviates `str(num_topics) + addendum`
-      * `document_shape_K--.npy`, `document_rate_K--.npy` - initial shapes and rates for thetas
-      * `topic_shape_K--.npy`, `topic_rate_K--.npy` - initial shapes and rates for betas
+    [poisson_factorization](TPF/code/poisson_factorization.py) initial values, `-_-_-` abbreviates `str(num_topics) + addendum + '_' + time_periods`
+      * `document_shape_K-_-_-.npy`, `document_rate_K-_-_-.npy` - PF-estimated shapes and rates for thetas (D×K)
+      * `topic_shape_K-_-_-.npy`, `topic_rate_K-_-_-.npy` - PF-estimated shapes and rates for betas (K×V)
     * [fits](data/hein-daily/fits), 
     [figs](data/hein-daily/figs), 
     [txts](data/hein-daily/txts), 
-    [tabs](data/hein-daily/tabs) - directories for STBS estimated parameters and checkpoints, 
+    [tabs](data/hein-daily/tabs) - directories for TPF (DPF) estimated parameters and checkpoints, 
     figures, text files (influential speeches) and tables. 
     Contains directories for specific model settings - 
-    defined by the `name` in [create_slurms](create_slurms) files.
+    defined by the `name` in [create_slurm_files](TPF/create_slurm_files) files.
 * [err](err) - directory for error files, properly structured
 * [out](out) - directory for output files, properly structured
-* [R](R) - `.R` files for creating plots and tables using R environment
-  * [plot_reg_coefs](R/plot_reg_coefs.R) - 
-  creates the regression summary plots for STBS model with party-specific effects of other covariates
-  * [plot_reg_coefs_interactions](R/plot_reg_coefs_interactions.R) - 
-  creates the regression summary plots for STBS model with additive regression formula
-  * Similarly, [table_reg_coefs](R/table_reg_coefs.R) and [table_reg_coefs_interactions](R/table_reg_coefs_interactions.R) - 
-  create `.tex` files containing the table of regression coefficients
-  * [barplot_eta_ideal_variability](R/barplot_eta_ideal_variability.R) - 
-  compare the variability of the ideological space between two models via barplot
-  * [ideal_party_R2](R/ideal_party_R2.R) -
-  compute the R^2 measure of explained variability by party for ideal point estimates
 * [slurm](slurm) - directory for `.slurm` files that submit jobs on cluster (very specific to the gpu cluster used for computations, 
 user needs to adjust these), properly structured
 
@@ -95,134 +81,164 @@ user needs to adjust these), properly structured
 
 First, create a new subdirectory in [data](data) named by `your_data_name` and add all the necessary folders. 
 You can supply the same format of the data as in [data/hein-daily/clean](data/hein-daily/clean) 
-created analogously to [preprocess_speeches](analysis/preprocess_speeches.py), 
+created analogously to [preprocessing speeches](TPF/analysis/hein_daily_preprocess_individual_vocabulary_combined.py), 
 then you only need to replace `data == 'hein-daily'` 
-with `data_name in ['hein-daily', 'your_data_name']` in [input_pipeline](code/input_pipeline.py). 
+with `data_name in ['hein-daily', 'your_data_name']` in [input_pipeline](TPF/code/input_pipeline.py). 
 This will expect the same input files as for `hein-daily`.
 
-There are other `data_name` sensitive functions in [code](code): 
-[create_X](code/create_X.py), 
-[plotting_functions](code/plotting_functions.py), 
-[influential_speeches](code/influential_speeches.py). 
-In case you want to have the data stored differently, create your own model matrix, 
-create your own plots or
-define your own way how to find the most influential speeches
-then you need to write your own function and add it to the corresponding wrapper.
+Another `data_name` sensitive function is in 
+[plotting_functions](TPF/code/plotting_functions.py). 
+In case you want to create your own plots, implement and add them for your `data_name`.
 You can find some examples of these tweaks already implemented for other than `hein-daily` dataset.
 
 ## Pre-processing speech data
 
-We follow the steps of Keyon Vafa 
-[Text-Based Ideal Points (2020)](https://github.com/keyonvafa/tbip). 
-These steps are performed in [preprocess_speeches](analysis/preprocess_speeches.py) in the following order for each session separately:
+We follow similar steps to Keyon Vafa 
+[Text-Based Ideal Points (2020)](https://github.com/keyonvafa/tbip),
+but adjust them since wee need to merge multiple sessions together.
+All is performed by [this](TPF/analysis/hein_daily_preprocess_individual_vocabulary_combined.py) 
+`.py` file. First, for each session we:
 1. Load and merge speeches with descriptions.
 2. Select only speeches by senators given in Senate.
-3. Remove senators who make less than 24 speeches.
-4. Create mapping between names and IDs and create a data frame of author-specific covariates.
-5. Use [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
+3. Create mapping between names and IDs and create a data frame of author-specific covariates.
+4. Use [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
 from [scikit-learn](https://scikit-learn.org/1.5/index.html) 
 library to eliminate stopwords, select n-gram range (here bigrams only)
-and set the minimal and maximal word-in-speech-appearance frequencies (0.001 and 0.3)
-6. Eliminate bigrams spoken by less than 10 Senators.
-7. Recall [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
-with the shortened vocabulary.
-8. Remove empty speeches without any bigram included (row sums are zero).
-9. Save sparse `counts.npz`, auxiliary indices and final vocabulary to [data/hein-daily/clean](data/hein-daily/clean).
+and set the minimal and maximal word-in-speech-appearance frequencies (0.001 and 0.3).
+5. Get vocabulary specific to each session.
+6. Stack all speech data into one dataframe for all sessions.
+
+Obviously, the vocabularies will be different for these sessions, so we need to combined them. 
+To do so we:
+1. Eliminate senators who have given less than `min_speeches = 1` speeches.
+2. Call [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
+with the combined vocabulary to the dataframe containing all speeches.
+3. Eliminate bigrams spoken by less than `min_authors_per_word = 1` Senators.
+4. Recall [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
+with shortened vocabulary.
+5. Remove empty speeches without any bigram included (row sums are zero).
+6. Save sparse `counts_voc_combined.npz` into [data/hein-daily/clean](data/hein-daily/clean), 
+where `_voc_combined` plays the role of `addendum` (it describes the preprocessing approach - many others have been tried before).
+
+Moreover, we need to combine the information about senators into one dataframe and merge it 
+with [data_aging_congress.csv](data/hein-daily/orig/data_aging_congress.csv).
+The merging is not as straightforward due to inconsistent naming and numbering conventions.
+These are resolve case by case. 
+More important is to save the information about each of the speeches including 
+the author index and the date when the speech has been given,
+[speech_info_voc_combined.csv](data/hein-daily/clean/speech_info_voc_combined.csv)
+
+We wanted to make the definition of the time-periods flexible. 
+To divide speeches into different time-periods we use 
+[define_time_periods](TPF/code/define_time_periods.py).
+In paper, we simply use the division by sessions (2 years beginning Jan 01),
+however, different break points can be supplied (e.g. important event dates).
+We eliminate words in the vocabulary that do not have 
+the minimal total appearance count `min_word_count = 1`.
+We provide an option to satisfy this condition to each time-period, 
+however, that would severely reduce the vocabulary size, and we do not recommend this option.
+
+For DPF the story is a bit different. 
+The speeches have to be aggregated into one document per some unit that repeatedly appears 
+throughout the time-periods.
+(Hundreds of speeches are pasted into one long document that covers all topics.)
+This unit could be an author (speaker), but then it does not appear regularly in each time-period.
+Then it would be DPF with missing data on authors. 
+This is possible with our implementation since we do not strictly work with 
+`counts[author, word, time]` but with `counts[author_time, word]`, where not all combinations
+of author and time in `author_time` index have to exist. 
+Strictly speaking, repetition of `author_time` index is not prohibited either, 
+so no aggregation could also be an option, however, this was not tested!
+Alternative definition of a unit could be the state or one of the two mandates per state. 
+This would strictly lead to DPF where all combinations of unit, word and time exist for hein-daily data.
+
 
 ## Model definition
 
 The implementation is very flexible and allows for many models to be fitted. 
-With this source code you can fit the original TBIP model with Gamma variational families 
-without any regression behind fixed ideological positions
-as well as
-our STBS model with topic-specific ideological positions and as elaborate prior distribution 
-as you wish. The paper presents the most complex setting, so with this implementation you can only simplify it, 
-but not suppose something even more complicated. That is left for you to implement. :) 
+You can 
+choose different priors, 
+adjust their hyperparameters, 
+choose variational family for the autoregressive sequence,
+specify tuning parameters for the estimation process,
+specify whether the parts of ELBO should be evaluated exactly or approximated with Monte Carlo.
+The same holds not only for TPF, but for DPF as well (different optimizer used then in the original paper).
+
 
 ### The choice of the prior distribution
 
-There are two important inputs to STBS that define the structural choice of the estimated model.
-* `prior_choice` - a dictionary that defines which model parameters are present and their dimensionality,
+There are two important inputs to TPF and DPF that define the structural choice of the estimated model.
+* `prior_choice` - a dictionary that defines which prior structures should be used,
 * `prior_hyperparameter` -  a dictionary containing the fixed values of hyperparameters of prior distributions.
 
-Both can be defined from `FLAGS` argument with functions in [check_prior](code/check_prior.py). 
-The choices and their meanings are all enumerated in details in [estimate_STBS_cluster](analysis/estimate_STBS_cluster.py). 
-Note that some choices are mutually exclusive. 
-[check_prior](code/check_prior.py) warns you about such inappropriate choices. 
+Both are be defined from `FLAGS` argument with functions in [check_prior](TPF/code/check_prior.py). 
+The choices and their meanings are all enumerated in details in 
+[tpf_cluster](TPF/analysis/tpf_cluster.py) and [dpf_cluster](DPF/analysis/dpf_cluster.py). 
 
-Let's explain it on several examples. First, these settings give you the latest implementation 
-of the original TBIP by Keyon Vafa (with Gamma variational families):
-```{python, eval=False}
-prior_choice = {
-        "theta": "Gfix",          # Gamma with fixed 'theta_shp' and 'theta_rte' 
-        "exp_verbosity": "LNfix", # Log-normal with fixed 'exp_verbosity_loc' and 'exp_verbosity_scl' 
-        "beta": "Gfix",           # Gamma with fixed 'beta_shp' and 'beta_rte' 
-        "eta": "Nfix",            # Normal with fixed 'eta_loc' and 'eta_scl' 
-        "ideal_dim": "a",         # ideal points have only author dimension (ideal points fixed for all topics)
-        "ideal_mean": "Nfix",     # Normal with fixed 'ideal_loc' --> no iota at all
-        "ideal_prec": "Nfix,      # Normal with fixed 'ideal_scl' 
-        "iota_dim": "l",          # ... irrelevant, iota (regression coefficients) do not exist
-        "iota_mean": "None",      # ... irrelevant
-        "iota_prec": "Nfix",      # ... irrelevant
-    }
-```
-To really fit it the same way, do not forget to set
-`exact_entropy = False` and `geom_approx = True`.
+* `prior_choice["theta"]` determines whether 
+Gamma with fixed hyperparameters (`Gfix`),
+Gamma with flexible author-specific rates (`Garte`) or
+Gamma with flexible document-specific rates (`Gdrate`)
+should be used for `theta` parameter. 
+This option is relevant only for TPF, DPF does not have this parameter.
+* `prior_choice["delta"]` determines whether delta
+unrestricted normal distribution (both prior and variational) (`AR`),
+truncated normal distribution to `[-1, 1]` (both prior and variational) (`ART`) or
+deterministic distribution (equal to 1, `RW`)
+should be used for the autoregressive coefficient `delta`.
 
-
-Now STBS model with regression but still fixed ideological positions across all topics:
-```{python, eval=False}
-prior_choice = {
-        "theta": "Garte",         # Gamma with fixed 'theta_shp' and flexible author-specific rates
-        "exp_verbosity": "None",  # will not exist in model, covered by theta_rate parameter instead (Gamma with fix values)
-        "beta": "Gvrte",          # Gamma with fixed 'beta_shp' and flexible word-specific rates
-        "eta": "NkprecF",         # Normal with topic-specific Fisher-Snedecor distributed precision (= triple gamma prior with eta_prec, eta_prec_rate)
-        "ideal_dim": "a",         # ideal points have only author dimension (ideal points fixed for all topics)
-        "ideal_mean": "Nreg",     # Normal with location determined by regression
-        "ideal_prec": "Nprec,     # Normal with unknown precision common to all authors 
-        "iota_dim": "l",          # regression coefficients (=iota) dimension only specific to covariates (cannot be to topics since ideal is not topic-specific) 
-        "iota_mean": "None",      # iota will be apriori Normal with fixed mean to 'iota_loc'
-        "iota_prec": "NlprecG",   # iota will be apriori Normal with coefficient-specific precision with apriori fixed Gamma
-    }
-```
-
-Now STBS model with regression in its full complexity presented in the paper:
-```{python, eval=False}
-prior_choice = {
-        "theta": "Garte",         # Gamma with fixed 'theta_shp' and flexible author-specific rates
-        "exp_verbosity": "None",  # will not exist in model, covered by theta_rate parameter instead (Gamma with fix values)
-        "beta": "Gvrte",          # Gamma with fixed 'beta_shp' and flexible word-specific rates
-        "eta": "NkprecF",         # Normal with topic-specific Fisher-Snedecor distributed precision (= triple gamma prior with eta_prec, eta_prec_rate)
-        "ideal_dim": "ak",        # ideal points have author and topic dimension (topic-specific ideal points)
-        "ideal_mean": "Nreg",     # Normal with location determined by regression
-        "ideal_prec": "Naprec,    # Normal with unknown precision specific to each author
-        "iota_dim": "lk",         # regression coefficients (=iota) specific to each covariate and topic
-        "iota_mean": "Nlmean",    # iota ~ Normal with flexible iota_mean parameter with Normal prior with fixed values
-        "iota_prec": "NlprecF",   # iota ~ Normal with coefficient-specific precision that follows triple Gamma prior - iota_prec, iota_prec_rate
-    }
-```
 
 Unless you change some parameters the default values for the `FLAGS` will be used to create the dictionary
 `prior_hyperparameter`. You can find more details in 
-[estimate_STBS_cluster](analysis/estimate_STBS_cluster.py) and 
-function `get_and_check_prior_hyperparameter` from [check_prior](code/check_prior.py).
+[tpf_cluster](TPF/analysis/tpf_cluster.py), [dpf_cluster](DPF/analysis/dpf_cluster.py) and 
+corresponding function `get_and_check_prior_hyperparameter` from `check_prior.py`.
+
+
+
+### The choice of the variational family
+
+By default, variational families are chosen to be either Normal or Gamma to allow for CAVI updates.
+The variational family for autoregressive coefficient `delta` matches the same choice for the prior (mixing them up is pointless).
+Hence, there is only one choice to be made - the variational distribution for the AR sequence:
+* `varfam_choice["ar_kv"]` - `ar_kv` stands for AR sequence that has also topic (k) and word (v) dimension
+  * `normal` - independent univariate Normal distribution,
+  * `MVnormal` - Multivariate Normal over the time indices.
+For DPF, `theta` is replaced with `ar_ak` sequence with analogous prior and variational structure.
+The original formulation of DPF has the mean directly included in the formula for Poisson rates.
+We rather include it as a prior location parameter for the AR sequence.
+This yields equivalent DPF model but the structure is now more similar to TPF.
+It enabled us to simply modify the code for TPF to obtain DPF. 
+
+
 
 ### Other model tuning parameters
 
-Moreover, there are other parameters that define the way STBS is estimated.
+Moreover, there are other parameters that define the way TPF, DPF is estimated.
 
 * `batch_size`: The batch size.
 * `RobMon_exponent`: Exponent in [-1, -0.5) satisfying Robbins-Monroe condition to 
 create convex-combinations of old and a new value.
+* `exact_reconstruction`: Should the exact reconstruction be computed (True) 
+or approximated with Monte Carlo (False)? 
+* `exact_log_prior`: Should the exact entropy be computed (True) 
+or approximated with Monte Carlo (False)?
 * `exact_entropy`: Should the exact entropy be computed (True) 
 or approximated with Monte Carlo (False)?
 * `geom_approx`: Should the expected ideological term Edkv be approximated by the geometric mean (True) 
 or should it be computed exactly (False)?
 * `aux_prob_sparse`: Should the counts and auxiliary proportions be worked with 
 as with sparse matrices (True/False)? 
-* (From experience, strangely, sparse format does not lead to faster computation with Tensorflow.)
-* `iota_coef_jointly`: Should the variational family over iota coefficients be joint (with general covariance matrix) (True) 
-instead of mean-field variational family which imposes independence between coefficients (False)?
+From experience, strangely, sparse format does not lead to faster computation with Tensorflow.
+
+The exact entropy is easily obtained from the variational family with the corresponding method.
+This cannot be done for reconstruction and log-prior since the variational means of model parameters
+have to be inserted at certain places. 
+Hence, these two are implemented manually. 
+Log-prob truly goes through all documents-specific parameters. 
+However, for reconstruction we only have counts for the current batch. 
+The contributions to reconstruction then have to be properly rescaled to match the size of the whole dataset.
+
+# TODO
 
 ### Monitoring the estimation process
 
