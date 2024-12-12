@@ -238,8 +238,6 @@ Log-prob truly goes through all documents-specific parameters.
 However, for reconstruction we only have counts for the current batch. 
 The contributions to reconstruction then have to be properly rescaled to match the size of the whole dataset.
 
-# TODO
-
 ### Monitoring the estimation process
 
 When STBS is estimated with our combination of CAVI updates and SVI, the values of
@@ -257,6 +255,8 @@ we recommend to compute it only one a while (after every `computeIC_every` epoch
 Results of this approximation are saved into `epoch_data.csv` including the computation times
 for estimation of the epoch as well as evaluation of the information criteria. 
 Similarly, traceplots are automatically created afterwards.
+
+# TODO - the text below needs adjustments
 
 ## Post-processing the results
 

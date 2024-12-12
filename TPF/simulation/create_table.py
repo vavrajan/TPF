@@ -21,7 +21,7 @@ for delta in ["zero", "half", "one"]:
         source_dir = os.path.join(data_dir, data_name)
         clean_dir = os.path.join(source_dir, 'clean')
         for ar in ["AR", "RW", "ART"]:
-            for varfam in ["normal", "MVnormal"]:
+            for varfam in ["MVnormal", "normal"]:
                 model = ar + '_' + varfam
                 for rep in range(1):
                     chname = "TPF_" + model + "_K" + str(K) + "_" + str(rep)
@@ -36,16 +36,16 @@ for delta in ["zero", "half", "one"]:
                     data = data.append(row)
 
 for ar in ["AR", "RW", "ART"]:
-    for varfam in ["normal", "MVnormal"]:
+    for varfam in ["MVnormal", "normal"]:
         model = ar + '_' + varfam
         models.append(model)
 
-model_names = {"AR_normal": 'A',
-               "AR_MVnormal": 'B',
-               "RW_normal": 'C',
-               "RW_MVnormal": 'D',
-               "ART_normal": 'E',
-               "ART_MVnormal": 'F'}
+model_names = {"AR_MVnormal": 'A',
+               "AR_normal": 'B',
+               "RW_MVnormal": 'C',
+               "RW_normal": 'D',
+               "ART_MVnormal": 'E',
+               "ART_normal": 'F'}
 delta_values = {"zero": 0.0,
                 "half": 0.5,
                 "one": 1.0}
