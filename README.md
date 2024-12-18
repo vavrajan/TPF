@@ -187,12 +187,10 @@ truncated normal distribution to `[-1, 1]` (both prior and variational) (`ART`) 
 deterministic distribution (equal to 1, `RW`)
 should be used for the autoregressive coefficient `delta`.
 
-
 Unless you change some parameters the default values for the `FLAGS` will be used to create the dictionary
 `prior_hyperparameter`. You can find more details in 
 [tpf_cluster](TPF/analysis/tpf_cluster.py), [dpf_cluster](DPF/analysis/dpf_cluster.py) and 
 corresponding function `get_and_check_prior_hyperparameter` from `check_prior.py`.
-
 
 
 ### The choice of the variational family
@@ -203,6 +201,7 @@ Hence, there is only one choice to be made - the variational distribution for th
 * `varfam_choice["ar_kv"]` - `ar_kv` stands for AR sequence that has also topic (k) and word (v) dimension
   * `normal` - independent univariate Normal distribution,
   * `MVnormal` - Multivariate Normal over the time indices.
+
 For DPF, `theta` is replaced with `ar_ak` sequence with analogous prior and variational structure.
 The original formulation of DPF has the mean directly included in the formula for Poisson rates.
 We rather include it as a prior location parameter for the AR sequence.
