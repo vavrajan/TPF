@@ -29,6 +29,7 @@ from DPF.code.dpf_model import DPF
 from DPF.code.train_step import train_step
 from DPF.code.information_criteria import get_variational_information_criteria
 from DPF.code.plotting_functions import create_all_general_descriptive_figures, create_all_figures_specific_to_data
+from DPF.code.create_latex_tables import create_latex_tables
 
 ## FLAGS
 flags.DEFINE_string("data_name", default="hein-daily", help="Data source being used.")
@@ -64,16 +65,6 @@ flags.DEFINE_integer("computeIC_every", default=0,
                           "If <=0, then do not compute at all.")
 flags.DEFINE_integer("max_steps", default=1000000, help="Number of training steps to run.")
 flags.DEFINE_integer("print_steps", default=500, help="Number of steps to print and save results.")
-flags.DEFINE_integer("num_top_speeches", default=10, help="Number of top speeches to be saved, "
-                                                          "if zero speech processing is completely skipped.")
-flags.DEFINE_enum("how_influential", default="theta_then_loglik_ratio_test",
-                  enum_values=["theta", "theta_then_loglik_ratio_test", "loglik_ratio_test"],
-                  help="The method for selection of the most influential speeches:"
-                       "theta = Compute variational means of theta parameters and choose documents maximizing it."
-                       "theta_then_loglik_ratio_test = Choose a batch maximizing variational means of theta (see above)."
-                       "    Then, compute a loglik ratio test statistic using just them."
-                       "loglik_ratio_test = Compute loglik-ratio statistic from all documents and choose the document "
-                       "    with the highest loglik ratio test statistic. ")
 
 # Method of estimation flags:
 flags.DEFINE_integer("num_topics", default=30, help="Number of topics.")
@@ -172,6 +163,7 @@ def main(argv):
     data_dir = os.path.join(source_dir, 'clean')
     save_dir = os.path.join(source_dir, 'fits', FLAGS.checkpoint_name)
     fig_dir = os.path.join(source_dir, 'figs', FLAGS.checkpoint_name)
+    tab_dir = os.path.join(source_dir, 'tabs', FLAGS.checkpoint_name)
     txt_dir = os.path.join(source_dir, 'txts', FLAGS.checkpoint_name)
     checkpoint_dir = os.path.join(save_dir, 'checkpoints')
 
@@ -183,6 +175,8 @@ def main(argv):
         os.mkdir(dpf_fit_dir)
     if not os.path.exists(fig_dir):
         os.mkdir(fig_dir)
+    if not os.path.exists(tab_dir):
+        os.mkdir(tab_dir)
     if not os.path.exists(txt_dir):
         os.mkdir(txt_dir)
 
@@ -477,10 +471,9 @@ def main(argv):
 
     create_all_figures_specific_to_data(model, FLAGS.data_name, fig_dir, vocabulary, breaks, FLAGS.time_periods)
 
-    # ### Top influential speeches for each topic
-    # if FLAGS.num_top_speeches > 0:
-    #     find_most_influential_speeches(model, FLAGS.data_name, data_dir, source_dir, txt_dir, FLAGS.addendum,
-    #                                    FLAGS.how_influential, FLAGS.batch_size, FLAGS.num_top_speeches)
+    ### Create LaTeX tables
+    create_latex_tables(model, tab_dir, vocabulary, breaks, FLAGS.time_periods)
+
 
 
 if __name__ == '__main__':

@@ -36,7 +36,7 @@ contains the scripts for performing the pre-processing, estimation and post-proc
   * [plotting_functions](TPF/code/plotting_functions.py) - contains functions to create descriptive plots using the latest TPF (DPF) model parameter values 
     * `create_all_general_descriptive_figures` - for any dataset (histograms, barplots, wordclouds, ...)
     * `create_all_figures_specific_to_data` - specific to each dataset (similarities, evolutions, ...)
-  * [plotting_functions](TPF/code/create_latex_tables.py) - contains functions to create basic tex tables: vocabulary and content evolution in time
+  * [create_latex_tables](TPF/code/create_latex_tables.py) - contains functions to create basic tex tables: vocabulary and content evolution in time
 * [create_slurm_files](TPF/create_slurm_files) - `.py` files to create `.slurm` files for submitting jobs on computational cluster,
 these files are specific to the computing environment used and are included for documentation (and inspiration) purposes 
 * [data](data) - contains data in separate folders
@@ -256,23 +256,21 @@ Results of this approximation are saved into `epoch_data.csv` including the comp
 for estimation of the epoch as well as evaluation of the information criteria. 
 Similarly, traceplots are automatically created afterwards.
 
-# TODO - the text below needs adjustments
-
 ## Post-processing the results
 
-Some post-processing is done already in [estimate_STBS_cluster](analysis/estimate_STBS_cluster.py) where after the 
-last epoch many useful plots (including barplots, histograms, wordclouds) are created using 
+Some post-processing is done already in 
+[tpf_cluster](TPF/analysis/tpf_cluster.py) and [dpf_cluster](DPF/analysis/dpf_cluster.py)
+where after the last epoch many useful plots (including barplots, histograms, wordclouds) 
+are created using 
 `create_all_general_descriptive_figures` and `create_all_figures_specific_to_data` from 
-[plotting_functions](code/plotting_functions.py).
-Then, if `num_top_speeches` > 0 then the most influential speeches are found using 
-`find_most_influential_speeches` function from 
-[influential_speeches](code/influential_speeches.py). 
-For `hein-daily` data we decided to first select a batch (of `batch_size`) of documents
-with the highest posterior mean of thetas (`shp / rte`) for each topic separately. Then,
-`num_top_speeches` documents with the highest log-likelihood-ratio-like test statistic are 
-saved into [txts](data/hein-daily/txts) subdirectory as the most influential speeches for the topic. 
+[plotting_functions](TPF/code/plotting_functions.py) 
+and [plotting_functions](DPF/code/plotting_functions.py).
+Similarly, tex tables specific to the one model are automatically created by 
+`create_latex_tables` from 
+[create_latex_tables](TPF/code/create_latex_tables.py) 
+and [create_latex_tables](DPF/code/create_latex_tables.py).
 
-Some post-analysis has to be performed by external `.py` or `.R` scripts.
+Some post-analysis has to be performed by external `.py` scripts.
 
 ### Model comparisons
 
@@ -300,13 +298,3 @@ along author and word axis into variances for each topic.
 A nice barplots for this comparison including labels for the topics is created by 
 [barplot_eta_ideal_variability](R/barplot_eta_ideal_variability.R). 
 These labels were assigned after exploration of the wordclouds containing the most relevant terms.
-
-### Regression summary plots using R
-
-Base R plotting devices allow us to be more creative with regression summary plots than python environment.
-Therefore, we create these plots (and regression summary tables) with `.R` scripts that can be found in `R` folder.
-Functions are tailored for `hein-daily` but with some changes it could be used for other datasets as well.
-We provide functions for both regression set-ups (additive and party-interaction) 
-that are usable regardless of topic-specificity of ideological positions.
-First, we have written a function to plot the results vertically to create thin plots.
-In the end, its transposed version proved to be better for both paper and slides. 

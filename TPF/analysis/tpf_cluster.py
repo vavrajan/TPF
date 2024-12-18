@@ -502,11 +502,6 @@ def main(argv):
     ### Create LaTeX tables
     create_latex_tables(model, tab_dir, vocabulary, breaks, FLAGS.time_periods)
 
-    # ### Top influential speeches for each topic
-    # if FLAGS.num_top_speeches > 0:
-    #     find_most_influential_speeches(model, FLAGS.data_name, data_dir, source_dir, txt_dir, FLAGS.addendum,
-    #                                    FLAGS.how_influential, FLAGS.batch_size, FLAGS.num_top_speeches)
-
 
 if __name__ == '__main__':
     app.run(main)
