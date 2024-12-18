@@ -35,6 +35,7 @@ class DPF(tf.keras.Model):
 
     def __init__(self,
                  num_authors: int,
+                 num_author_times: int,
                  num_topics: int,
                  num_words: int,
                  num_times: int,
@@ -52,6 +53,7 @@ class DPF(tf.keras.Model):
 
         Args:
             num_authors: The number of authors in the corpus.
+            num_author_times: The number of pairs author-time in the corpus.
             num_topics: The number of topics used for the model.
             num_words: The number of words in the vocabulary.
             num_times: The number of time-periods in the corpus.
@@ -70,6 +72,7 @@ class DPF(tf.keras.Model):
         """
         super(DPF, self).__init__()
         self.num_authors = num_authors
+        self.num_author_times = num_author_times
         self.num_topics = num_topics
         self.num_words = num_words
         self.num_times = num_times
@@ -84,7 +87,7 @@ class DPF(tf.keras.Model):
         self.exact_reconstruction = exact_reconstruction
         self.batch_size = batch_size
         # batch_size = tf.shape(counts)[0]
-        self.minibatch_scaling = tf.dtypes.cast(self.num_authors / batch_size, tf.float32)
+        self.minibatch_scaling = tf.dtypes.cast(self.num_author_times / batch_size, tf.float32)
         self.log_prior_constant = 0.0
 
         # ar_ak_mean, ar_kv_mean = Mean of the AR sequences
@@ -897,7 +900,7 @@ class DPF(tf.keras.Model):
         prec_shift = 1.0 + (self.num_times - 1.0) * delta_squared
         loc_shift  = (1.0 - Eq_delta + Eq_delta_2) * tf.gather(Eq_ar, 0, axis=-1)
         loc_shift += delta_squared * tfm.reduce_sum(tf.gather(Eq_ar, tf.range(1, self.num_times-1), axis=-1), axis=-1)
-        loc_shift += (1.0 - Eq_delta) * tf.gather(Eq_ar, self.num_times, axis=-1)
+        loc_shift += (1.0 - Eq_delta) * tf.gather(Eq_ar, self.num_times-1, axis=-1)
 
         update_mean_prec = prior_prec + Eq_tau * prec_shift
         update_mean_var = tfm.reciprocal(update_mean_prec)
@@ -970,7 +973,7 @@ class DPF(tf.keras.Model):
 
         # We scale to account for the fact that we're only using a minibatch to
         # update the variational parameters of a global latent variable.
-        self.minibatch_scaling = tf.cast(self.num_authors / self.batch_size, tf.dtypes.float32)
+        self.minibatch_scaling = tf.cast(self.num_author_times / self.batch_size, tf.dtypes.float32)
         self.step_size = tfm.pow(tf.cast(step, tf.dtypes.float32) + 1, self.RobMon_exponent)
         # print(self.step_size)
 
@@ -1165,7 +1168,7 @@ class DPF(tf.keras.Model):
         entropy = self.get_entropy(samples, nsamples=nsamples, exact=self.exact_entropy)
 
         # Adjust for the fact that we're only using a minibatch.
-        reconstruction_loss = -tfm.reduce_mean(count_log_likelihood) * self.minibatch_scaling
+        reconstruction_loss = -tfm.reduce_mean(count_log_likelihood) # * self.minibatch_scaling
         log_prior_loss = -tfm.reduce_mean(log_prior)
         entropy_loss = -tfm.reduce_mean(entropy)
         return reconstruction_loss, log_prior_loss, entropy_loss, seed

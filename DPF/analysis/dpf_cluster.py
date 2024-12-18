@@ -217,6 +217,7 @@ def main(argv):
     ### Model initialization
     optim = tf.optimizers.Adam(learning_rate=FLAGS.learning_rate)
     model = DPF(num_authors,
+                num_author_times,
                 FLAGS.num_topics,
                 num_words,
                 num_times,
@@ -277,14 +278,27 @@ def main(argv):
     start_time = time.time()
     start_epoch = model.start_epoch.numpy()
 
-    model_state = {'ELBO': [], 'entropy': [], 'log_prior': [], 'reconstruction': [],
-                   'epoch': [], 'batch': [], 'step': []}
+    if os.path.exists(os.path.join(save_dir, 'model_state.csv')):
+        model_state = pd.read_csv(os.path.join(save_dir, 'model_state.csv'), index_col=False)
+        # in case there are saved more epochs than the last saved checkpoint (can happen if save_every > 1)
+        model_state = model_state[model_state['epoch'] <= start_epoch]
+    else:
+        model_state = pd.DataFrame({'ELBO': [], 'entropy': [], 'log_prior': [], 'reconstruction': [],
+                                    'epoch': [], 'batch': [], 'step': []})
+
     batches_per_epoch = len(dataset)
 
     if FLAGS.computeIC_every > 0:
-        epoch_data = {'ELBO': [], 'entropy': [], 'log_prior': [], 'reconstruction': [],
-                      'reconstruction_at_Eqmean': [], 'effective_number_of_parameters': [], 'VAIC': [], 'VBIC': [],
-                      "sec/epoch": [], "sec/ELBO": [], 'epoch': []}
+        if os.path.exists(os.path.join(save_dir, 'epoch_data.csv')):
+            epoch_data = pd.read_csv(os.path.join(save_dir, 'epoch_data.csv'), index_col=False)
+            for y in ["sec/epoch", "sec/ELBO"]:
+                if y not in epoch_data.keys():
+                    epoch_data[y] = 0.0
+        else:
+            epoch_data = pd.DataFrame({'ELBO': [], 'entropy': [], 'log_prior': [], 'reconstruction': [],
+                                       'reconstruction_at_Eqmean': [], 'effective_number_of_parameters': [],
+                                       'VAIC': [], 'VBIC': [], "sec/epoch": [], "sec/ELBO": [], 'epoch': []})
+
     step = 0
     for epoch in range(start_epoch + 1, FLAGS.num_epochs):
         for batch_index, batch in enumerate(iter(dataset)):
@@ -293,13 +307,19 @@ def main(argv):
             (total_loss, reconstruction_loss, log_prior_loss, entropy_loss, seed) = train_step(
                 model, inputs, outputs, optim, seed, tf.constant(step))
             checkpoint.seed.assign(seed)
-            model_state['ELBO'].append(-total_loss.numpy())
-            model_state['entropy'].append(-entropy_loss.numpy())
-            model_state['log_prior'].append(-log_prior_loss.numpy())
-            model_state['reconstruction'].append(-reconstruction_loss.numpy())
-            model_state['epoch'].append(epoch)
-            model_state['batch'].append(batch_index)
-            model_state['step'].append(step)
+            state_step = {'ELBO': [-total_loss.numpy()], 'entropy': [-entropy_loss.numpy()],
+                          'log_prior': [-log_prior_loss.numpy()], 'reconstruction': [-reconstruction_loss.numpy()],
+                          'epoch': [epoch], 'batch': [batch_index], 'step': [step]}
+            # model_state = model_state.append(state_step, ignore_index=True)
+            model_state = pd.concat([model_state, pd.DataFrame(state_step)], ignore_index=True)
+            model_state.to_csv(os.path.join(save_dir, 'model_state.csv'), index=False)
+            # model_state['ELBO'].append(-total_loss.numpy())
+            # model_state['entropy'].append(-entropy_loss.numpy())
+            # model_state['log_prior'].append(-log_prior_loss.numpy())
+            # model_state['reconstruction'].append(-reconstruction_loss.numpy())
+            # model_state['epoch'].append(epoch)
+            # model_state['batch'].append(batch_index)
+            # model_state['step'].append(step)
 
         sec_per_step = (time.time() - start_time) / (step + 1)
         sec_per_epoch = (time.time() - start_time) / (epoch - start_epoch)
@@ -319,7 +339,6 @@ def main(argv):
                 # ELBO_MC, log_prior_MC, entropy_MC, reconstruction_MC, reconstruction_at_Eqmean, effective_number_of_parameters, VAIC, VBIC, seed = model.get_variational_information_criteria(
                 #     dataset, seed=seed, nsamples=FLAGS.num_samplesIC)
                 ELBOtime = time.time() - ELBOstart
-
                 epoch_line = {'ELBO': [ELBO.numpy()], 'entropy': [entropy.numpy()],
                               'log_prior': [log_prior.numpy()], 'reconstruction': [reconstruction.numpy()],
                               'reconstruction_at_Eqmean': [reconstruction_at_Eqmean.numpy()],
@@ -327,13 +346,13 @@ def main(argv):
                               'VAIC': [VAIC.numpy()], 'VBIC': [VBIC.numpy()],
                               "sec/epoch": [sec_per_epoch], "sec/ELBO": [ELBOtime],
                               'epoch': [epoch]}
+                # epoch_data = epoch_data.append(epoch, ignore_index=True)
                 epoch_data = pd.concat([epoch_data, pd.DataFrame(epoch_line)], ignore_index=True)
                 epoch_data.to_csv(os.path.join(save_dir, 'epoch_data.csv'), index=False)
-
-                # epoch_data['ELBO_MC'].append(ELBO_MC.numpy())
-                # epoch_data['entropy_MC'].append(entropy_MC.numpy())
-                # epoch_data['log_prior_MC'].append(log_prior_MC.numpy())
-                # epoch_data['reconstruction_MC'].append(reconstruction_MC.numpy())
+                # epoch_data['ELBO'].append(ELBO.numpy())
+                # epoch_data['entropy'].append(entropy.numpy())
+                # epoch_data['log_prior'].append(log_prior.numpy())
+                # epoch_data['reconstruction'].append(reconstruction.numpy())
                 # epoch_data['reconstruction_at_Eqmean'].append(reconstruction_at_Eqmean.numpy())
                 # epoch_data['effective_number_of_parameters'].append(effective_number_of_parameters.numpy())
                 # epoch_data['VAIC'].append(VAIC.numpy())
@@ -423,41 +442,34 @@ def main(argv):
             pd.DataFrame(model.ar_kv_prec_varfam.rate.numpy()).to_csv(
                 os.path.join(param_save_dir, "ar_kv_prec_rte.csv"))
 
-
-    ### Saving the ELBO values
-    model_state = pd.DataFrame(model_state)
-    model_state.to_csv(os.path.join(save_dir, 'model_state.csv'))
-
     ### Plotting the ELBO evolution in time plots
     for var in ['ELBO', 'entropy', 'log_prior', 'reconstruction']:
+        sub_model_state = model_state[model_state['epoch'] >= start_epoch]
         # All steps
-        plt.plot(model_state['step'], model_state[var])
+        plt.plot(sub_model_state['step'], sub_model_state[var])
         plt.ylabel(var)
         plt.xlabel('Step')
-        plt.savefig(os.path.join(fig_dir, var + '.png'))
+        plt.savefig(os.path.join(fig_dir, 'batch_' + var + '.png'))
         plt.close()
         # Averages over epochs
-        avg = model_state[var].to_numpy()
+        avg = sub_model_state[var].to_numpy()
         avg = avg.reshape((FLAGS.num_epochs - max(start_epoch, 0), batches_per_epoch))
         avg = np.mean(avg, axis=1)
         plt.plot(range(max(start_epoch, 0), FLAGS.num_epochs), avg)
         plt.ylabel(var)
         plt.xlabel('Epoch')
-        plt.savefig(os.path.join(fig_dir, 'avg_' + var + '.png'))
+        plt.savefig(os.path.join(fig_dir, 'avg_batch_' + var + '.png'))
         plt.close()
 
     if FLAGS.computeIC_every > 0:
-        ### Saving the better approximation of ELBO+IC values
-        epoch_data = pd.DataFrame(epoch_data)
-        epoch_data.to_csv('epoch_data.csv')
-
         for var in ['ELBO', 'entropy', 'log_prior', 'reconstruction', 'reconstruction_at_Eqmean',
                     'effective_number_of_parameters', 'VAIC', 'VBIC', 'sec/epoch', 'sec/ELBO']:
-            plt.plot(epoch_data['epoch'], epoch_data[var])
+            sub_epoch_data = epoch_data[epoch_data['epoch'] >= start_epoch]
+            plt.plot(sub_epoch_data['epoch'], sub_epoch_data[var])
             plt.ylabel(var)
             plt.xlabel('Epoch')
             # plt.show()
-            plt.savefig(os.path.join(fig_dir,  var.replace('/', '_per_') + '.png'))
+            plt.savefig(os.path.join(fig_dir, 'full_approx_' + var.replace('/', '_per_') + '.png'))
             plt.close()
 
     ### Other figures

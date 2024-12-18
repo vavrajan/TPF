@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 
-@tf.function
+tf.function
 def get_variational_information_criteria(model, dataset, seed=None, nsamples=10):
     """Performs thorough approximation of the individual components of the ELBO.
     Then computes several variational versions of known information criteria.
@@ -36,7 +36,7 @@ def get_variational_information_criteria(model, dataset, seed=None, nsamples=10)
 
     for step, batch in enumerate(iter(dataset)):
         inputs, outputs = batch
-        reconstruction_batch, log_prior_batch, entropy_batch, seed = model(inputs, seed, nsamples)
+        reconstruction_batch, log_prior_batch, entropy_batch, seed = model(inputs, outputs, seed, nsamples)
         entropy.append(-entropy_batch)
         log_prior.append(-log_prior_batch)
         reconstruction.append(-reconstruction_batch)
