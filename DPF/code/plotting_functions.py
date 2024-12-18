@@ -539,7 +539,7 @@ def create_all_figures_specific_to_data(model, data_name: str, fig_dir: str, voc
         time_periods: String that defines the set of dates that break the data into time-periods.
 
     """
-    if data_name == 'hein-daily':
+    if (data_name == 'hein-daily') or (data_name[0:10] == "simulation"):
         dbreaks = [datetime.datetime(year=int(str(b)[0:4]), month=int(str(b)[4:6]), day=int(str(b)[6:8])) for b in
                    breaks]
         middbreaks = [dbreaks[t] + 0.5 * (dbreaks[t + 1] - dbreaks[t]) for t in range(model.num_times)]
@@ -553,6 +553,8 @@ def create_all_figures_specific_to_data(model, data_name: str, fig_dir: str, voc
             xlabels = [str(i) for i in range(97, 115)]
         elif time_periods == "years":
             xlabels = [str(i) for i in range(1981, 2017)]
+        elif time_periods == "":
+            xlabels = [str(i) for i in range(len(breaks) - 1)]
         else:
             xlabels = [t.strftime("%Y-%m-%d") for t in middbreaks]
         ylabels = [str(k) for k in range(model.num_topics)]
@@ -572,13 +574,13 @@ def create_all_figures_specific_to_data(model, data_name: str, fig_dir: str, voc
 
             # Similarities among topics each time separately
             cosine_similarity_kkt = get_cosine_similarity_topics(model, what)
-            for t in tf.range(model.num_times):
-                plot_cosine_similarity(tf.gather(cosine_similarity_kkt, t, axis=-1),
-                                       title='Cosine similarities among topics, time-period='+xlabels[t],
-                                       xlabels=ylabels, ylabels=ylabels,
-                                       xlab='Topic', ylab='Topic',
-                                       path=os.path.join(fig_dir,
-                                                         'cosine_similarity_topics_t_' + str(t.numpy()) + add + '.png'))
+            # for t in tf.range(model.num_times):
+            #     plot_cosine_similarity(tf.gather(cosine_similarity_kkt, t, axis=-1),
+            #                            title='Cosine similarities among topics, time-period='+xlabels[t],
+            #                            xlabels=ylabels, ylabels=ylabels,
+            #                            xlab='Topic', ylab='Topic',
+            #                            path=os.path.join(fig_dir,
+            #                                              'cosine_similarity_topics_t_' + str(t.numpy()) + add + '.png'))
 
             # averaged over time
             plot_cosine_similarity(tf.reduce_mean(cosine_similarity_kkt, axis=-1),
@@ -606,14 +608,14 @@ def create_all_figures_specific_to_data(model, data_name: str, fig_dir: str, voc
 
         # Dissimilarities among topics each time separately
         KL_dissimilarity_kkt = get_KL_dissimilarity_topics(model)
-        for t in tf.range(model.num_times):
-            plot_cosine_similarity(tf.gather(KL_dissimilarity_kkt, t, axis=-1),
-                                   title='KL dissimilarity among topics, time-period=' + xlabels[t],
-                                   xlabels=ylabels, ylabels=ylabels,
-                                   xlab='Topic', ylab='Topic',
-                                   path=os.path.join(fig_dir,
-                                                     'KL_dissimilarity_topics_t_' + str(t.numpy()) + '.png'),
-                                   col_rev=True)
+        # for t in tf.range(model.num_times):
+        #     plot_cosine_similarity(tf.gather(KL_dissimilarity_kkt, t, axis=-1),
+        #                            title='KL dissimilarity among topics, time-period=' + xlabels[t],
+        #                            xlabels=ylabels, ylabels=ylabels,
+        #                            xlab='Topic', ylab='Topic',
+        #                            path=os.path.join(fig_dir,
+        #                                              'KL_dissimilarity_topics_t_' + str(t.numpy()) + '.png'),
+        #                            col_rev=True)
 
         # averaged over time
         plot_cosine_similarity(tf.reduce_mean(KL_dissimilarity_kkt, axis=-1),

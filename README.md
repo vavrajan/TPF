@@ -274,27 +274,15 @@ Some post-analysis has to be performed by external `.py` scripts.
 
 ### Model comparisons
 
-What cannot be done immediately after estimation of an STBS is comparison of two STBS outputs.
-First, both different settings have to be estimated. Then, we only load the parameters of interest
-instead of the whole STBS structure.
+What cannot be done immediately after estimation of an TPF is 
+comparison across multiple estimated models.
+First, all different settings have to be estimated. Then, we only load the parameters of interest
+instead of the whole TPF structure.
 
-We wish to compare the ideological positions estimated by the classical TBIP and estimated STBS
-model and also compute the correlation coefficient between them to demonstrate the similarity.
-We plot the results together with under many variations using 
-[compare_TBIP_with_STBS](analysis/compare_TBIP_with_STBS.py).
-The differences are in the way we create the group means for political parties, 
-they can be either taken from the regression coefficients iota or just (weighted) averages
-of ideological positions of speakers within the respective groups.
-The topics are then ordered (and plotted in this order) by the difference between these two party means. 
+[table_ELBO](TPF/analysis/table_ELBO.py) creates plain unformatted table of 4 rows where different settings of
+delta prior and variational family for autoregressive sequence are compared in terms of the 
+last values of reconstruction, log-prior, entropy ELBO, VAIC, VBIC.
+[models_VIC](TPF/analysis/models_VIC.py) is an improved version of the previous script that creates 
+the table used in paper where sec/epoch and sec/ELBO are included instead of log-prior and entropy.
+Moreover, it plots the evolution of these characteristics with increasing epoch number.
 
-Next, we also wish to compare the variability of ideological space between STBS model with
-fixed and with topic-specific ideological positions. 
-Script [compare_variability_of_ideal_term](analysis/compare_variability_of_ideal_term.py)
-provides several aspects, in which these two could be topic-wise compared.
-In the end, we decided for the variability induced by both 
-ideological corrections eta and ideological positions, named with `eta_ideal_variability`. 
-It is computed by multiplying location estimates for eta and ideal and reducing this 3D tensor
-along author and word axis into variances for each topic. 
-A nice barplots for this comparison including labels for the topics is created by 
-[barplot_eta_ideal_variability](R/barplot_eta_ideal_variability.R). 
-These labels were assigned after exploration of the wordclouds containing the most relevant terms.
