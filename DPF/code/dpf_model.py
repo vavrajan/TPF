@@ -269,7 +269,7 @@ class DPF(tf.keras.Model):
         return ar_cov, ar_var
 
     def get_exact_log_prior(self, ):
-        log_prior = tf.constant(0.0)
+        log_prior = tf.constant(self.log_prior_constant)
 
         ### AR mean contribution
         ar_ak_mean_var = tfm.square(self.ar_ak_mean_varfam.scale)
@@ -293,10 +293,8 @@ class DPF(tf.keras.Model):
         elif self.ar_ak_delta_varfam.family == "Tnormal":
             Eq_delta = self.ar_ak_delta_varfam.distribution.mean()
             Varq_delta = self.ar_ak_delta_varfam.distribution.variance()
-            Eq_delta2 = Varq_delta + tfm.square(Eq_delta)
             log_prior -= 0.5 * tfm.reduce_sum(
-                Eq_delta2 - 2.0 * self.prior_hyperparameter["ar_ak_delta"]["location"] * Eq_delta +
-                tfm.square(self.prior_hyperparameter["ar_ak_delta"]["location"])
+                tfm.square(self.prior_hyperparameter["ar_ak_delta"]["location"] - Eq_delta) + Varq_delta
             ) / tfm.square(self.prior_hyperparameter["ar_ak_delta"]["scale"])
 
         if self.ar_kv_delta_varfam.family == "normal":
@@ -307,10 +305,8 @@ class DPF(tf.keras.Model):
         elif self.ar_kv_delta_varfam.family == "Tnormal":
             Eq_delta = self.ar_kv_delta_varfam.distribution.mean()
             Varq_delta = self.ar_kv_delta_varfam.distribution.variance()
-            Eq_delta2 = Varq_delta + tfm.square(Eq_delta)
             log_prior -= 0.5 * tfm.reduce_sum(
-                Eq_delta2 - 2.0 * self.prior_hyperparameter["ar_kv_delta"]["location"] * Eq_delta +
-                tfm.square(self.prior_hyperparameter["ar_kv_delta"]["location"])
+                tfm.square(self.prior_hyperparameter["ar_kv_delta"]["location"] - Eq_delta) + Varq_delta
             ) / tfm.square(self.prior_hyperparameter["ar_kv_delta"]["scale"])
 
         ### Tau (prec) contribution
@@ -332,6 +328,7 @@ class DPF(tf.keras.Model):
         E_delta_ak = self.get_E_delta_matrix(self.ar_ak_delta_varfam)
         ar_ak_cov, ar_ak_var = self.get_ar_cov(self.ar_ak_varfam)
         dif_ar_ak = self.ar_ak_varfam.location - self.ar_ak_mean_varfam.location[:, :, tf.newaxis]
+        # log_prior += 0.5 * tfm.log(1.0) # determinant of the delta matrix is 1 --> no contribution
         log_prior += 0.5 * self.num_times * sum_E_log_ar_ak_prec
         log_prior -= 0.5 * tfm.reduce_sum(
             E_ar_ak_prec * (
@@ -344,6 +341,7 @@ class DPF(tf.keras.Model):
         E_delta_kv = self.get_E_delta_matrix(self.ar_kv_delta_varfam)
         ar_kv_cov, ar_kv_var = self.get_ar_cov(self.ar_kv_varfam)
         dif_ar_kv = self.ar_kv_varfam.location - self.ar_kv_mean_varfam.location[:, :, tf.newaxis]
+        # log_prior += 0.5 * tfm.log(1.0) # determinant of the delta matrix is 1 --> no contribution
         log_prior += 0.5 * self.num_times * sum_E_log_ar_kv_prec
         log_prior -= 0.5 * tfm.reduce_sum(
             E_ar_kv_prec * (
@@ -352,9 +350,6 @@ class DPF(tf.keras.Model):
                 + tfm.reduce_sum(dif_ar_kv * tf.linalg.matvec(E_delta_kv, dif_ar_kv), axis=-1)
             )
         )
-
-        # + constant
-        log_prior += self.log_prior_constant
 
         return log_prior
 

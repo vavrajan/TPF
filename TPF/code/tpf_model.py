@@ -280,7 +280,7 @@ class TPF(tf.keras.Model):
         return ar_cov, ar_var
 
     def get_exact_log_prior(self):
-        log_prior = tf.constant(0.0)
+        log_prior = tf.constant(self.log_prior_constant)
 
         theta = self.get_Eqmean(self.theta_varfam, log=False)
         log_theta = self.get_Eqmean(self.theta_varfam, log=True)
@@ -319,10 +319,8 @@ class TPF(tf.keras.Model):
         elif self.ar_kv_delta_varfam.family == "Tnormal":
             Eq_delta = self.ar_kv_delta_varfam.distribution.mean()
             Varq_delta = self.ar_kv_delta_varfam.distribution.variance()
-            Eq_delta2 = Varq_delta + tfm.square(Eq_delta)
             log_prior -= 0.5 * tfm.reduce_sum(
-                Eq_delta2 - 2.0 * self.prior_hyperparameter["ar_kv_delta"]["location"] * Eq_delta +
-                tfm.square(self.prior_hyperparameter["ar_kv_delta"]["location"])
+                tfm.square(self.prior_hyperparameter["ar_kv_delta"]["location"] - Eq_delta) + Varq_delta
             ) / tfm.square(self.prior_hyperparameter["ar_kv_delta"]["scale"])
 
         ### Tau (prec) contribution
@@ -337,6 +335,7 @@ class TPF(tf.keras.Model):
         ar_kv_cov, ar_kv_var = self.get_ar_cov(self.ar_kv_varfam)
         dif_ar_kv = self.ar_kv_varfam.location - self.ar_kv_mean_varfam.location[:, :, tf.newaxis]
 
+        # log_prior += 0.5 * tfm.log(1.0) # determinant of the delta matrix is 1 --> no contribution
         log_prior += 0.5 * self.num_times * sum_E_log_ar_kv_prec
         log_prior -= 0.5 * tfm.reduce_sum(
             E_ar_kv_prec * (
@@ -345,9 +344,6 @@ class TPF(tf.keras.Model):
                 + tfm.reduce_sum(dif_ar_kv * tf.linalg.matvec(E_delta_kv, dif_ar_kv), axis=-1)
             )
         )
-
-        # + constant
-        log_prior += self.log_prior_constant
 
         return log_prior
 
