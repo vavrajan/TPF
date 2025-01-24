@@ -1136,16 +1136,25 @@ class DPF(tf.keras.Model):
             ar_kv_bkv = tf.transpose(tf.gather(self.ar_kv_varfam.location, inputs['time_indices'], axis=-1),
                                      perm=[2, 0, 1])
             aux_prob_log = ar_ak_bk[:, :, tf.newaxis] + ar_kv_bkv
+            max_aux_prob_log = tfm.reduce_max(aux_prob_log, axis=1)
+            aux_prob_log_subtract_max = aux_prob_log - max_aux_prob_log[:, tf.newaxis, :]
             # aux_prob_log of shape [batch_size, num_topics, num_words]
-            auxiliary_proportions = self.get_cavi_auxiliary_proportions(aux_prob_log)
+            # auxiliary_proportions = self.get_cavi_auxiliary_proportions(aux_prob_log)
             ar_ak_cov, ar_ak_var = self.get_ar_cov(self.ar_ak_varfam)
             ar_ak_var_bk = self.akt_to_bk(ar_ak_var, inputs['author_indices'], inputs['time_indices'])
             ar_kv_cov, ar_kv_var = self.get_ar_cov(self.ar_kv_varfam) # [K, V, T]
             ar_kv_var_bkv = tf.transpose(tf.gather(ar_kv_var, inputs['time_indices'], axis=-1), perm=[2, 0, 1])
-            reconstruction = tfm.reduce_sum(
-                tf.sparse.to_dense(outputs)[:, tf.newaxis, :] * auxiliary_proportions * aux_prob_log -
-                tfm.exp(aux_prob_log + 0.5 * ar_ak_var_bk[:, :, tf.newaxis] + 0.5 * ar_kv_var_bkv)
-            )
+            # reconstruction = tfm.reduce_sum(
+            #     tf.sparse.to_dense(outputs)[:, tf.newaxis, :] * auxiliary_proportions * aux_prob_log -
+            #     tfm.exp(aux_prob_log + 0.5 * ar_ak_var_bk[:, :, tf.newaxis] + 0.5 * ar_kv_var_bkv)
+            # )
+            sum_E_log_lambda = max_aux_prob_log + tfm.log(tfm.reduce_sum(tfm.exp(aux_prob_log_subtract_max), axis=1))
+            sum_E_lambda = tfm.reduce_sum(
+                tfm.exp(aux_prob_log + 0.5 * ar_ak_var_bk[:, :, tf.newaxis] + 0.5 * ar_kv_var_bkv),
+                axis=1)
+            reconstruction = tfm.reduce_sum(tf.sparse.to_dense(outputs) * sum_E_log_lambda - sum_E_lambda)
+            # + constant (only add non-zero outputs, otherwise 0 should be added anyway)
+            reconstruction -= tfm.reduce_sum(tfm.lgamma(outputs.values + 1))  # lgamma(n) = log((n-1)!)
             count_log_likelihood = tf.repeat(reconstruction, nsamples)
         else:
             rate = self.get_rates(samples, author_indices=inputs['author_indices'], time_indices=inputs['time_indices'])

@@ -371,7 +371,7 @@ def get_cosine_similarity_topics(model, what="log_beta"):
 
     return cosine_similarity
 
-def plot_cosine_similarity(cosine, title, xlabels, ylabels, xlab, ylab, path, col_rev=False, size=(10, 10)):
+def plot_similarity(similarity, title, xlabels, ylabels, xlab, ylab, path, col_rev=False, size=(9, 9)):
     plt.figure(figsize=size)
     plt.grid(False)
     plt.xlabel(xlab)
@@ -385,8 +385,10 @@ def plot_cosine_similarity(cosine, title, xlabels, ylabels, xlab, ylab, path, co
         cmap = cm.gray_r
     else:
         cmap = cm.gray
-    im = plt.pcolormesh(cosine, cmap=cmap, edgecolors='white', linewidths=1, antialiased=True)
-    plt.colorbar(im)
+    im = plt.pcolormesh(similarity, cmap=cmap, edgecolors='white', linewidths=1, antialiased=True)
+    formatter = tlt.ScalarFormatter()
+    formatter.set_powerlimits(lims=(-3, 4))
+    plt.colorbar(im, format=formatter)
     plt.tight_layout()
     plt.savefig(path, bbox_inches='tight')
     # plt.show()
@@ -429,6 +431,35 @@ def get_KL_dissimilarity_topics(model):
 
     return KL_dissimilarity
 
+
+def get_KL_dissimilarity_topics_multivariate(model):
+    loc_kvt = model.ar_kv_varfam.location
+    cov_kvtt, var_kvt = model.get_ar_cov(model.ar_kv_varfam)
+    prec_kvtt = tf.linalg.inv(cov_kvtt)
+    KL_dissimilarity = tf.zeros([model.num_topics, model.num_topics])
+    for k1 in tf.range(model.num_topics):
+        loc_k1 = tf.gather(loc_kvt, k1, axis=0)
+        cov_k1 = tf.gather(cov_kvtt, k1, axis=0)
+        prec_k1 = tf.gather(prec_kvtt, k1, axis=0)
+        for k2 in tf.range(model.num_topics):
+            if k1 < k2:
+                loc_k2 = tf.gather(loc_kvt, k2, axis=0)
+                cov_k2 = tf.gather(cov_kvtt, k2, axis=0)
+                prec_k2 = tf.gather(prec_kvtt, k2, axis=0)
+                loc_dif = loc_k1 - loc_k2
+                KL = 0.25 * tfm.reduce_sum(
+                    tf.linalg.matmul(loc_dif[:, tf.newaxis, :], tf.linalg.matvec(prec_k1 + prec_k2, loc_dif)[:, :, tf.newaxis])[:, 0, 0] +
+                    tf.linalg.trace(tf.linalg.matmul(prec_k2, cov_k1)) + tf.linalg.trace(tf.linalg.matmul(prec_k1, cov_k2)) - 2*cov_k2.shape[-1],
+                    axis=0
+                ) / loc_kvt.shape[-1] # divide by T to make it comparable to single time dissimilarity
+            elif k1 == k2:
+                KL = 0.0
+            else:
+                KL = KL_dissimilarity[k2, k1]
+            # KL_dissimilarity[k1, k2] = KL
+            KL_dissimilarity = tf.tensor_scatter_nd_update(KL_dissimilarity, [[[k1, k2]]], [[KL]])
+
+    return KL_dissimilarity
 
 
 
@@ -566,72 +597,80 @@ def create_all_figures_specific_to_data(model, data_name: str, fig_dir: str, voc
             add = '_' + what
             # Topic similarities across time
             cosine_similarity_tk = get_cosine_similarity_times(model, what)
-            plot_cosine_similarity(tf.transpose(cosine_similarity_tk),
-                                   title='Cosine similarities across consecutive time-periods',
-                                   xlabels=xlabels, ylabels=ylabels,
-                                   xlab=None, ylab='Topic',
-                                   path=os.path.join(fig_dir, 'cosine_similarity_in_time' + add + '.png'))
+            plot_similarity(tf.transpose(cosine_similarity_tk),
+                            title='Cosine similarities across consecutive time-periods',
+                            xlabels=xlabels, ylabels=ylabels,
+                            xlab=None, ylab='Topic',
+                            path=os.path.join(fig_dir, 'cosine_similarity_in_time' + add + '.png'))
 
             # Similarities among topics each time separately
             cosine_similarity_kkt = get_cosine_similarity_topics(model, what)
             # for t in tf.range(model.num_times):
-            #     plot_cosine_similarity(tf.gather(cosine_similarity_kkt, t, axis=-1),
-            #                            title='Cosine similarities among topics, time-period='+xlabels[t],
-            #                            xlabels=ylabels, ylabels=ylabels,
-            #                            xlab='Topic', ylab='Topic',
-            #                            path=os.path.join(fig_dir,
-            #                                              'cosine_similarity_topics_t_' + str(t.numpy()) + add + '.png'))
+            #     plot_similarity(tf.gather(cosine_similarity_kkt, t, axis=-1),
+            #                     title='Cosine similarities among topics, time-period='+xlabels[t],
+            #                     xlabels=ylabels, ylabels=ylabels,
+            #                     xlab='Topic', ylab='Topic',
+            #                     path=os.path.join(fig_dir,
+            #                                       'cosine_similarity_topics_t_' + str(t.numpy()) + add + '.png'))
 
             # averaged over time
-            plot_cosine_similarity(tf.reduce_mean(cosine_similarity_kkt, axis=-1),
-                                   title='Averaged cosine similarities among topics',
-                                   xlabels=ylabels, ylabels=ylabels,
-                                   xlab='Topic', ylab='Topic',
-                                   path=os.path.join(fig_dir, 'cosine_similarity_topics_averaged' + add + '.png'))
+            plot_similarity(tf.reduce_mean(cosine_similarity_kkt, axis=-1),
+                            title='Averaged cosine similarities among topics',
+                            xlabels=ylabels, ylabels=ylabels,
+                            xlab='Topic', ylab='Topic',
+                            path=os.path.join(fig_dir, 'cosine_similarity_topics_averaged' + add + '.png'))
 
             # max over time
-            plot_cosine_similarity(tf.reduce_max(cosine_similarity_kkt, axis=-1),
-                                   title='Maximal cosine similarities among topics',
-                                   xlabels=ylabels, ylabels=ylabels,
-                                   xlab='Topic', ylab='Topic',
-                                   path=os.path.join(fig_dir, 'cosine_similarity_topics_maximal' + add + '.png'))
+            plot_similarity(tf.reduce_max(cosine_similarity_kkt, axis=-1),
+                            title='Maximal cosine similarities among topics',
+                            xlabels=ylabels, ylabels=ylabels,
+                            xlab='Topic', ylab='Topic',
+                            path=os.path.join(fig_dir, 'cosine_similarity_topics_maximal' + add + '.png'))
 
         ### KL dissimilarity heatmaps
         # Topic dissimilarities across time
         KL_dissimilarity_tk = get_KL_dissimilarity_times(model)
-        plot_cosine_similarity(tf.transpose(KL_dissimilarity_tk),
-                               title='KL dissimilarity across consecutive time-periods',
-                               xlabels=xlabels, ylabels=ylabels,
-                               xlab=None, ylab='Topic',
-                               path=os.path.join(fig_dir, 'KL_dissimilarity_in_time.png'),
-                               col_rev=True)
+        plot_similarity(tf.transpose(KL_dissimilarity_tk),
+                        title='KL dissimilarity across consecutive time-periods',
+                        xlabels=xlabels, ylabels=ylabels,
+                        xlab=None, ylab='Topic',
+                        path=os.path.join(fig_dir, 'KL_dissimilarity_in_time.png'),
+                        col_rev=True)
 
         # Dissimilarities among topics each time separately
         KL_dissimilarity_kkt = get_KL_dissimilarity_topics(model)
         # for t in tf.range(model.num_times):
-        #     plot_cosine_similarity(tf.gather(KL_dissimilarity_kkt, t, axis=-1),
-        #                            title='KL dissimilarity among topics, time-period=' + xlabels[t],
-        #                            xlabels=ylabels, ylabels=ylabels,
-        #                            xlab='Topic', ylab='Topic',
-        #                            path=os.path.join(fig_dir,
-        #                                              'KL_dissimilarity_topics_t_' + str(t.numpy()) + '.png'),
-        #                            col_rev=True)
+        #     plot_similarity(tf.gather(KL_dissimilarity_kkt, t, axis=-1),
+        #                     title='KL dissimilarity among topics, time-period=' + xlabels[t],
+        #                     xlabels=ylabels, ylabels=ylabels,
+        #                     xlab='Topic', ylab='Topic',
+        #                     path=os.path.join(fig_dir, 'KL_dissimilarity_topics_t_' + str(t.numpy()) + '.png'),
+        #                     col_rev=True)
 
         # averaged over time
-        plot_cosine_similarity(tf.reduce_mean(KL_dissimilarity_kkt, axis=-1),
-                               title='Averaged KL dissimilarities among topics',
-                               xlabels=ylabels, ylabels=ylabels,
-                               xlab='Topic', ylab='Topic',
-                               path=os.path.join(fig_dir, 'KL_dissimilarity_topics_averaged.png'),
-                               col_rev=True)
+        plot_similarity(tf.reduce_mean(KL_dissimilarity_kkt, axis=-1),
+                        title='Averaged KL dissimilarities among topics',
+                        xlabels=ylabels, ylabels=ylabels,
+                        xlab='Topic', ylab='Topic',
+                        path=os.path.join(fig_dir, 'KL_dissimilarity_topics_averaged.png'),
+                        col_rev=True)
 
         # min over time
-        plot_cosine_similarity(tf.reduce_min(KL_dissimilarity_kkt, axis=-1),
-                               title='Minimal KL dissimilarities among topics',
-                               xlabels=ylabels, ylabels=ylabels,
-                               xlab='Topic', ylab='Topic',
-                               path=os.path.join(fig_dir, 'KL_dissimilarity_topics_minimal.png'),
-                               col_rev=True)
+        plot_similarity(tf.reduce_min(KL_dissimilarity_kkt, axis=-1),
+                        title='Minimal KL dissimilarities among topics',
+                        xlabels=ylabels, ylabels=ylabels,
+                        xlab='Topic', ylab='Topic',
+                        path=os.path.join(fig_dir, 'KL_dissimilarity_topics_minimal.png'),
+                        col_rev=True)
+
+        # Symmetrized Kullback-Leibler divergence between multivariate normal distributions
+        KL_dissimilarity_kk = get_KL_dissimilarity_topics_multivariate(model)
+        plot_similarity(KL_dissimilarity_kk,
+                        title=None,  # 'Averaged KL dissimilarities among topics',
+                        xlabels=ylabels, ylabels=ylabels,
+                        xlab='Topic', ylab='Topic',
+                        path=os.path.join(fig_dir, 'KL_dissimilarity_topics_multivariate.png'),
+                        col_rev=True)
 
 
     elif data_name == "example":
