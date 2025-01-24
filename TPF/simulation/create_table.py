@@ -24,7 +24,7 @@ for delta in ["zero", "half", "one"]:
             for varfam in ["MVnormal", "normal"]:
                 model = ar + '_' + varfam
                 for rep in range(10):
-                    chname = "TVPF6_" + model + "_K" + str(K) + "_" + str(rep)
+                    chname = "TPF_" + model + "_K" + str(K) + "_" + str(rep)
                     fit_dir = os.path.join(source_dir, 'fits', chname)
                     edata = pd.read_csv(os.path.join(fit_dir,  'epoch_data.csv'))
                     row = edata.iloc[-1]
@@ -49,7 +49,7 @@ for delta in ["zero", "half", "one"]:
         clean_dir = os.path.join(source_dir, 'clean')
         model = "RW_normal"
         for rep in range(10):
-            chname = "DPF3_" + model + "_K" + str(K) + "_" + str(rep)
+            chname = "DPF_" + model + "_K" + str(K) + "_" + str(rep)
             fit_dir = os.path.join(source_dir, 'fits', chname)
             edata = pd.read_csv(os.path.join(fit_dir,  'epoch_data.csv'))
             row = edata.iloc[-1]
@@ -238,5 +238,5 @@ with open(path, 'w') as file:
     file.write('\\bottomrule\n')
     file.write('\\end{tabular}\n')
 
-save_data.to_csv(os.path.join(data_dir, "simulation", "csv", "tableVIC.csv"))
-data.to_csv(os.path.join(data_dir, "simulation", "csv", "data_tableVIC.csv"))
+save_data.to_csv(os.path.join(data_dir, "simulation", "tableVIC.csv"))
+data.to_csv(os.path.join(data_dir, "simulation", "data_tableVIC.csv"))
