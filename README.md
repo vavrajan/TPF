@@ -6,39 +6,44 @@ Source code for the paper:
 
 * [TPF](TPF) - Tensorflow implementation of Temporal Poisson Factorisation (TPF)
 * [DPF](DPF) - Tensorflow implementation of Dynamic Poisson Factorisation (DPF)
-*  both TPF and DPF have analogous directory structure and files
-* [analysis](TPF/analysis) - 
-contains the scripts for performing the pre-processing, estimation and post-processing TPF 
-([DPF](DPF/analysis))
-  * [hein_daily_preprocess_individual_vocabulary_combined](TPF/analysis/hein_daily_preprocess_individual_vocabulary_combined.py) - 
-  load `hein-daily` original texts from all sessions 97-114, 
-  process them separately with 
-  [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
-  create a combined vocabulary for all sessions 
-  and save into [data/hein-daily/clean](data/hein-daily/clean) 
-  * [define_time_periods_cluster](TPF/analysis/define_time_periods_cluster.py) - 
-  trigger [define_time_periods](TPF/code/define_time_periods.py) script on computational cluster
-  * [tpf_cluster](TPF/analysis/tpf_cluster.py), [dpf_cluster](DPF/analysis/dpf_cluster.py) - 
-  estimates TPF or DPF model on computational cluster 
-  * [table_ELBO](TPF/analysis/table_ELBO.py), 
-  [models_VIC](TPF/analysis/models_VIC.py) 
-  create tex tables for different settings of TPF containing ELBO, VIC and other characteristics
-* [code](TPF/code) - source code `.py` files defining TPF 
-([DPF](DPF/code))
-  * [define_time_periods](TPF/code/define_time_periods.py) - run first to define the division into time-periods
-  * [poisson_factorization](TPF/code/poisson_factorization.py) - run second for initialization
-  * [tpf_model](TPF/code/tpf_model.py), [dpf_model](DPF/code/dpf_model.py) - the main file containing the definition of the TPF and DPF model
-  * [check_prior](TPF/code/check_prior.py), 
-  [input_pipeline](TPF/code/input_pipeline.py) - prepare inputs for TPF (DPF)
-  * [train_step](TPF/code/train_step.py), 
-  [information_criteria](TPF/code/information_criteria.py), 
-  [var_and_prior_families](TPF/code/var_and_prior_family.py) - used for estimation of TPF (DPF)
-  * [plotting_functions](TPF/code/plotting_functions.py) - contains functions to create descriptive plots using the latest TPF (DPF) model parameter values 
-    * `create_all_general_descriptive_figures` - for any dataset (histograms, barplots, wordclouds, ...)
-    * `create_all_figures_specific_to_data` - specific to each dataset (similarities, evolutions, ...)
-  * [create_latex_tables](TPF/code/create_latex_tables.py) - contains functions to create basic tex tables: vocabulary and content evolution in time
-* [create_slurm_files](TPF/create_slurm_files) - `.py` files to create `.slurm` files for submitting jobs on computational cluster,
-these files are specific to the computing environment used and are included for documentation (and inspiration) purposes 
+  *  both TPF and DPF have analogous directory structure and files
+  * [analysis](TPF/analysis) - 
+  contains the scripts for performing the pre-processing, estimation and post-processing TPF 
+  ([DPF](DPF/analysis))
+    * [hein_daily_preprocess_individual_vocabulary_combined](TPF/analysis/hein_daily_preprocess_individual_vocabulary_combined.py) - 
+    load `hein-daily` original texts from all sessions 97-114, 
+    process them separately with 
+    [CountVectorizer](https://scikit-learn.org/1.5/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html) 
+    create a combined vocabulary for all sessions 
+    and save into [data/hein-daily/clean](data/hein-daily/clean) 
+    * [define_time_periods_cluster](TPF/analysis/define_time_periods_cluster.py) - 
+    trigger [define_time_periods](TPF/code/define_time_periods.py) script on computational cluster
+    * [tpf_cluster](TPF/analysis/tpf_cluster.py), [dpf_cluster](DPF/analysis/dpf_cluster.py) - 
+    estimates TPF or DPF model on computational cluster 
+    * [table_ELBO](TPF/analysis/table_ELBO.py), 
+    [models_VIC](TPF/analysis/models_VIC.py) 
+    create tex tables for different settings of TPF containing ELBO, VIC and other characteristics
+  * [code](TPF/code) - source code `.py` files defining TPF 
+  ([DPF](DPF/code))
+    * [define_time_periods](TPF/code/define_time_periods.py) - run first to define the division into time-periods
+    * [poisson_factorization](TPF/code/poisson_factorization.py) - run second for initialization
+    * [tpf_model](TPF/code/tpf_model.py), [dpf_model](DPF/code/dpf_model.py) - the main file containing the definition of the TPF and DPF model
+    * [check_prior](TPF/code/check_prior.py), 
+    [input_pipeline](TPF/code/input_pipeline.py) - prepare inputs for TPF (DPF)
+    * [train_step](TPF/code/train_step.py), 
+    [information_criteria](TPF/code/information_criteria.py), 
+    [var_and_prior_families](TPF/code/var_and_prior_family.py) - used for estimation of TPF (DPF)
+    * [plotting_functions](TPF/code/plotting_functions.py) - contains functions to create descriptive plots using the latest TPF (DPF) model parameter values 
+      * `create_all_general_descriptive_figures` - for any dataset (histograms, barplots, wordclouds, ...)
+      * `create_all_figures_specific_to_data` - specific to each dataset (similarities, evolutions, ...)
+    * [create_latex_tables](TPF/code/create_latex_tables.py) - contains functions to create basic tex tables: vocabulary and content evolution in time
+  * [create_slurm_files](TPF/create_slurm_files) - `.py` files to create `.slurm` files for submitting jobs on computational cluster,
+  these files are specific to the computing environment used and are included for documentation (and inspiration) purposes 
+  * [simulation](TPF/simulation) - contains files for simulations
+    * [create_table](TPF/simulation/create_table.py) - combines results of multiple models into one LaTeX table
+    * [generate_counts](TPF/simulation/generate_counts.py) - file for generating artificial data
+  * [R](TPF/R) - directory for R scripts
+    * [R](TPF/R/simulation_VAIC.R) - create nicely formatted plot of boxplots with ggplot2
 * [data](data) - contains data in separate folders
   * [hein-daily](data/hein-daily) - contains data from [Hein-Daily](https://data.stanford.edu/congress_text) (here only session 114)
     * [orig](data/hein-daily/orig) - original `hein-daily` data for session 114
