@@ -45,8 +45,8 @@ Source code for the paper:
   * [R](TPF/R) - directory for R scripts
     * [R](TPF/R/simulation_VAIC.R) - create nicely formatted plot of boxplots with ggplot2
 * [data](data) - contains data in separate folders
-  * [hein-daily](data/hein-daily) - contains data from [Hein-Daily](https://data.stanford.edu/congress_text) (here only session 114)
-    * [orig](data/hein-daily/orig) - original `hein-daily` data for session 114
+  * [hein-daily](data/hein-daily) - contains data from [Hein-Daily](https://data.stanford.edu/congress_text)
+    * [orig](data/hein-daily/orig) - `hein-daily` data in original format
       * [stopwords](data/hein-daily/orig/stopwords.txt) - 
       list of stopwords used to process the speeches
       * `sss_SpeakerMap.txt`, `byparty_2gram_sss.txt`, `byspeaker_2gram_sss.txt`, `descr_sss.txt`, `speeches_sss.txt` - 
